@@ -13,6 +13,10 @@ monthly spring–neap cycle all change together.
 - **Spring and neap tides you can see.** The month chart shades the spring
   tides at new and full moon and the neap tides at the quarter moons. A dashed
   envelope shows the tidal range growing and shrinking.
+- **"Show me a tide" presets.** One click jumps to a neap, normal or spring
+  high or low tide, so students can compare them side by side. Neap is set at
+  first quarter, spring at full moon, and normal halfway between. Each button
+  picks the high or low nearest midday on that day.
 - **Turn each pull on or off.** Switch off the Sun and every day has the same
   range, so there is no spring–neap cycle. Switch off the Moon and you get a
   weaker solar tide with highs at noon and midnight.

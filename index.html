@@ -77,6 +77,14 @@
   .ticks button{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:10px;line-height:1.3;text-align:center;background:transparent;border:0;border-top:1px solid var(--line);padding:7px 1px 0;color:var(--dim);cursor:pointer}
   .ticks button b{font-weight:500;letter-spacing:.08em;text-transform:uppercase}
   .ticks button:hover,.ticks button[aria-current="true"]{color:var(--accent-ink);border-top-color:var(--accent)}
+  .presets{display:flex;align-items:center;gap:10px 18px;flex-wrap:wrap;margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
+  .presets .head{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
+  .preset-grid{flex:1 1 420px;display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .preset{display:flex;flex-direction:column;gap:4px}
+  .preset .name{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
+  .preset .btns{display:flex;gap:6px}
+  .preset .btn{flex:1;padding:7px 6px}
+  .preset .btn[aria-pressed="true"]{border-color:var(--accent);color:var(--accent-ink);background:var(--surface)}
 
   .chartcard{margin-top:16px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px 10px}
   .chart-head{display:flex;justify-content:space-between;align-items:baseline;gap:4px 12px;flex-wrap:wrap}
@@ -249,6 +257,20 @@
       <button type="button" data-i="2">Full moon<br><b>Spring</b></button>
       <button type="button" data-i="3">Last quarter<br><b>Neap</b></button>
     </div>
+    <div class="presets">
+      <span class="head">Show me a tide</span>
+      <div class="preset-grid" id="presets">
+        <div class="preset"><span class="name">Neap</span><div class="btns">
+          <button type="button" class="btn" data-kind="neap" data-hi="1">High</button>
+          <button type="button" class="btn" data-kind="neap" data-hi="0">Low</button></div></div>
+        <div class="preset"><span class="name">Normal</span><div class="btns">
+          <button type="button" class="btn" data-kind="normal" data-hi="1">High</button>
+          <button type="button" class="btn" data-kind="normal" data-hi="0">Low</button></div></div>
+        <div class="preset"><span class="name">Spring</span><div class="btns">
+          <button type="button" class="btn" data-kind="spring" data-hi="1">High</button>
+          <button type="button" class="btn" data-kind="spring" data-hi="0">Low</button></div></div>
+      </div>
+    </div>
   </div>
 
   <section class="chartcard" id="chartcard">
@@ -392,7 +414,8 @@
       elSkyTop=$("sky-top"), elSkyBot=$("sky-bot"),
       elHwL=$("hw-line"), elHwT=$("hw-txt"), elLwL=$("lw-line"), elLwT=$("lw-txt"),
       elSlider=$("slider"), elPlay=$("play"), month=$("month"), zoom=$("zoom"),
-      tickBtns=$("ticks").querySelectorAll("button");
+      tickBtns=$("ticks").querySelectorAll("button"),
+      presetBtns=$("presets").querySelectorAll("button"), activePreset=null, presetT=-1;
 
   function envPath(fm,fs,m){
     var d = "";
@@ -540,8 +563,8 @@
     if(both){
       if(qq>0.8){ cyc = "Spring"; sub = "Spring tides · Sun and Moon in line"; }
       else if(qq<-0.8){ cyc = "Neap"; sub = "Neap tides · Sun and Moon at right angles"; }
-      else if(toNeap){ cyc = "To neap"; sub = "Range shrinking toward neap"; }
-      else { cyc = "To spring"; sub = "Range growing toward spring"; }
+      else if(toNeap){ cyc = "Normal"; sub = "Normal tides · range shrinking toward neap"; }
+      else { cyc = "Normal"; sub = "Normal tides · range growing toward spring"; }
     } else if(useM){ cyc = "None"; sub = "Moon only · same range every day"; }
     else { cyc = "None"; sub = "Sun only · highs at noon and midnight"; }
     $("tide-sub").textContent = sub;
@@ -570,6 +593,7 @@
     if(document.activeElement!==elSlider) elSlider.value = t.toFixed(3);
     var k = Math.round(t/(SYN/4)), near = Math.abs(t-k*SYN/4)<1.5;
     for(var b=0;b<tickBtns.length;b++) tickBtns[b].setAttribute("aria-current", near && b===k%4 ? "true" : "false");
+    for(var pb=0;pb<presetBtns.length;pb++) presetBtns[pb].setAttribute("aria-pressed", presetBtns[pb]===activePreset && Math.abs(t-presetT)<1e-6 ? "true" : "false");
   }
 
   function setT(d){ t = wrap(d); render(); }
@@ -633,6 +657,25 @@
   }
   sh.addEventListener("click", function(){ setSpeed(false); });
   sd.addEventListener("click", function(){ setSpeed(true); });
+
+  // presets: a typical day of each kind (neap at first quarter, spring at full moon,
+  // normal halfway between), then the high or low tide nearest midday of that day
+  var PRESET_DAY = {neap: SYN/4, normal: 3*SYN/8, spring: SYN/2};
+  function goPreset(btn){
+    stop();
+    if(!useM || !useS) setUse(true, true);
+    var base = PRESET_DAY[btn.dataset.kind], hi = btn.dataset.hi==="1";
+    var noon = base + frac(0.5-frac(base+c)) - (frac(0.5-frac(base+c))>0.5 ? 1 : 0);
+    var best = null;
+    extremes(noon-0.4, noon+0.4).forEach(function(e){
+      if(e.hi===hi && (!best || Math.abs(e.t-noon)<Math.abs(best.t-noon))) best = e;
+    });
+    activePreset = btn; presetT = wrap(best ? best.t : noon);
+    setT(presetT);
+  }
+  for(var pi=0; pi<presetBtns.length; pi++){
+    presetBtns[pi].addEventListener("click", function(e){ goPreset(e.currentTarget); });
+  }
 
   var bm = $("use-m"), bs = $("use-s");
   function setUse(m,s){
