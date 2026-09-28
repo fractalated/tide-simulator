@@ -1,0 +1,666 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="An interactive tide simulator: move the Moon around Earth and watch the tidal bulges, the water at a harbor, and the monthly cycle of spring and neap tides change together.">
+<meta name="color-scheme" content="light dark">
+<meta property="og:title" content="Tide Simulator">
+<meta property="og:description" content="Move the Moon and watch the ocean bulges, the harbor tide, and the spring–neap cycle change together.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8C%8A%3C/text%3E%3C/svg%3E">
+<title>Tide Simulator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Instrument+Serif&display=swap">
+<style>
+  :root{
+    --ground:#F1F3F7; --surface:#FFFFFF; --surface-2:#E7EBF2; --line:#D2D8E4;
+    --text:#141821; --dim:#59627A; --accent:#C6820E; --accent-ink:#8A5A05; --sea-ink:#1F6FAE;
+    --sky-1:#080B14; --sky-2:#141A2B; --sky-line:#2A3347; --sky-text:#C8D0E4; --sky-dim:#7D89A5;
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --ground:#0C0E15; --surface:#151926; --surface-2:#1D2332; --line:#2A3143;
+      --text:#E5E9F2; --dim:#96A0B8; --accent:#F0B429; --accent-ink:#F6C445; --sea-ink:#5CA8E0;
+    }
+  }
+  :root[data-theme="dark"]{
+    --ground:#0C0E15; --surface:#151926; --surface-2:#1D2332; --line:#2A3143;
+    --text:#E5E9F2; --dim:#96A0B8; --accent:#F0B429; --accent-ink:#F6C445; --sea-ink:#5CA8E0;
+  }
+  *{box-sizing:border-box}
+  body{background:var(--ground);color:var(--text);font-family:"Archivo",system-ui,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1060px;margin:0 auto;padding-inline:18px;padding-block:28px 48px}
+
+  header{margin-bottom:22px}
+  .eyebrow{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin:0 0 6px}
+  h1{font-family:"Instrument Serif",Georgia,serif;font-weight:400;font-size:clamp(34px,6vw,50px);line-height:1.02;margin:0;letter-spacing:-.01em;text-wrap:balance}
+  .lede{margin:8px 0 0;max-width:62ch;color:var(--dim);font-size:15px}
+
+  .stages{display:grid;grid-template-columns:1.15fr .85fr;gap:16px;align-items:stretch}
+  @media (max-width:820px){.stages{grid-template-columns:1fr}}
+
+  .stage{background:radial-gradient(120% 90% at 70% 10%,var(--sky-2),var(--sky-1));border:1px solid var(--sky-line);border-radius:16px;padding:12px 12px 10px;display:flex;flex-direction:column;overflow:hidden}
+  .stage svg{display:block;width:100%;height:auto;max-width:100%;touch-action:none}
+  .stage figcaption{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--sky-dim);margin-top:8px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+  #orbit{cursor:grab}
+  #orbit:active{cursor:grabbing}
+  #harbor-stage{justify-content:space-between}
+  #harbor{border-radius:10px}
+
+  .tide-name{font-family:"Instrument Serif",Georgia,serif;font-size:26px;color:var(--sky-text);text-align:center;margin:10px 0 0;line-height:1.1}
+  .tide-sub{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:11px;color:var(--sky-dim);text-align:center;letter-spacing:.06em;margin:2px 0 0;text-transform:uppercase}
+
+  .pills{display:flex;gap:4px;justify-content:center;margin-top:8px;flex-wrap:wrap}
+  .pills button{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;background:transparent;color:var(--sky-dim);border:1px solid var(--sky-line);padding:5px 10px;border-radius:999px;cursor:pointer}
+  .pills button[aria-pressed="true"]{background:var(--sky-line);color:var(--sky-text)}
+  .pills .lab{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--sky-dim);align-self:center;margin-right:4px}
+
+  .readout{display:grid;grid-template-columns:repeat(auto-fit,minmax(132px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-top:16px}
+  .cell{background:var(--surface);padding:11px 13px}
+  .cell dt{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin:0}
+  .cell dd{margin:3px 0 0;font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:19px;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+
+  .controls{margin-top:16px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px 16px}
+  .row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .btn{font-family:"Archivo",sans-serif;font-size:13px;font-weight:500;background:var(--surface-2);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:7px 13px;cursor:pointer}
+  .btn:hover{border-color:var(--dim)}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#1A1204;min-width:64px}
+  .seg{display:flex;gap:4px}
+  .seg button{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;background:transparent;color:var(--dim);border:1px solid var(--line);padding:6px 10px;border-radius:999px;cursor:pointer}
+  .seg button[aria-pressed="true"]{background:var(--surface-2);color:var(--text);border-color:var(--dim)}
+  .scrub{flex:1 1 220px;min-width:180px}
+  input[type=range]{width:100%;accent-color:var(--accent);height:26px}
+  .when{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:11px;color:var(--dim);font-variant-numeric:tabular-nums}
+  .ticks{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-top:6px}
+  .ticks button{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:10px;line-height:1.3;text-align:center;background:transparent;border:0;border-top:1px solid var(--line);padding:7px 1px 0;color:var(--dim);cursor:pointer}
+  .ticks button b{font-weight:500;letter-spacing:.08em;text-transform:uppercase}
+  .ticks button:hover,.ticks button[aria-current="true"]{color:var(--accent-ink);border-top-color:var(--accent)}
+
+  .chartcard{margin-top:16px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px 10px}
+  .chart-head{display:flex;justify-content:space-between;align-items:baseline;gap:4px 12px;flex-wrap:wrap}
+  .chart-head h2{font-family:"Instrument Serif",Georgia,serif;font-weight:400;font-size:20px;margin:0}
+  .chart-head .key{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
+  .key i{display:inline-block;width:16px;height:0;vertical-align:middle;margin-right:5px;border-top:2px solid var(--sea-ink)}
+  .key i.env{border-top:1.5px dashed var(--accent)}
+  svg.chart{display:block;width:100%;height:180px;touch-action:none;margin-top:4px}
+  #month{cursor:ew-resize;margin-bottom:14px}
+  .chart text{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:10px;fill:var(--dim)}
+  .chart text.strong{fill:var(--text)}
+  .chart .grid{stroke:var(--line);stroke-width:1}
+  .chart .curve{fill:none;stroke:var(--sea-ink);stroke-width:1.4;stroke-linejoin:round}
+  .chart .env{fill:none;stroke:var(--accent);stroke-width:1.2;stroke-dasharray:4 4}
+  .chart .band-s{fill:var(--accent);fill-opacity:.12}
+  .chart .band-n{fill:var(--dim);fill-opacity:.09}
+  .chart .night{fill:var(--dim);fill-opacity:.09}
+  .chart .cursor{stroke:var(--accent-ink);stroke-width:1.5}
+  .chart .dot{fill:var(--accent);stroke:var(--surface);stroke-width:2}
+  .chart .ext{fill:var(--sea-ink);stroke:var(--surface);stroke-width:1.5}
+
+  .notes{margin-top:30px;display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:22px}
+  .notes h2{font-family:"Instrument Serif",Georgia,serif;font-weight:400;font-size:20px;margin:0 0 5px}
+  .notes p{margin:0;font-size:14px;color:var(--dim);max-width:46ch}
+  footer{margin-top:28px;border-top:1px solid var(--line);padding-top:12px;font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:10.5px;letter-spacing:.06em;color:var(--dim)}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<style>
+  :root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+  body{margin:0;font-size:14px}
+  img{max-width:100%}
+  [hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <p class="eyebrow">Sun · Earth · Moon · Ocean</p>
+    <h1>Tide Simulator</h1>
+    <p class="lede">Drag the Moon, or play time forward. The left panel shows the ocean&rsquo;s tidal bulges from above. The right panel shows the water rising and falling at one harbor. The chart shows a whole month of tides, with spring and neap tides marked.</p>
+  </header>
+
+  <div class="stages">
+    <figure class="stage" id="orbit-stage" style="margin:0">
+      <svg id="orbit" viewBox="0 0 520 380" role="img" aria-label="Top-down view of Earth, its ocean bulges, and the Moon's orbit, with sunlight arriving from the right">
+        <defs>
+          <radialGradient id="sunglow" cx="85%" cy="50%" r="60%">
+            <stop offset="0%" stop-color="#FFE9A8"/><stop offset="45%" stop-color="#F6C445"/><stop offset="100%" stop-color="#C9820E"/>
+          </radialGradient>
+        </defs>
+        <g id="stars-a"></g>
+        <circle cx="545" cy="190" r="86" fill="url(#sunglow)"/>
+        <g stroke="#F6C445" stroke-opacity=".22" stroke-width="1.5">
+          <path d="M452 86 H150"/><path d="M452 138 H120"/><path d="M452 242 H120"/><path d="M452 294 H150"/>
+        </g>
+        <g fill="#F6C445" fill-opacity=".3">
+          <path d="M150 86 l9 -4 v8 z"/><path d="M120 138 l9 -4 v8 z"/><path d="M120 242 l9 -4 v8 z"/><path d="M150 294 l9 -4 v8 z"/>
+        </g>
+        <text x="497" y="106" text-anchor="middle" fill="#3A2C08" font-family="IBM Plex Mono,monospace" font-size="10" letter-spacing="1.6">SUN</text>
+
+        <circle cx="230" cy="190" r="128" fill="none" stroke="#2A3347" stroke-width="1" stroke-dasharray="3 6"/>
+        <g id="ghosts"></g>
+        <line id="axis" x1="230" y1="190" x2="358" y2="190" stroke="#7D89A5" stroke-opacity=".5" stroke-width="1" stroke-dasharray="2 4"/>
+
+        <path id="water" d="" fill="#2F7FC1" fill-opacity=".55" stroke="#7FB8E6" stroke-opacity=".75" stroke-width="1.2"/>
+        <path id="env-m" d="" fill="none" stroke="#EBE4D4" stroke-opacity=".6" stroke-width="1" stroke-dasharray="3 3"/>
+        <path id="env-s" d="" fill="none" stroke="#F6C445" stroke-opacity=".75" stroke-width="1" stroke-dasharray="3 3"/>
+
+        <g>
+          <circle cx="230" cy="190" r="30" fill="#1E3448"/>
+          <path d="M230 160 A30 30 0 0 1 230 220 Z" fill="#5C9BC9"/>
+          <circle cx="230" cy="190" r="30" fill="none" stroke="#8FC0E0" stroke-opacity=".35"/>
+        </g>
+
+        <g id="obs">
+          <line id="obs-line" stroke="#F0B429" stroke-opacity=".5" stroke-width="1" stroke-dasharray="2 2"/>
+          <circle id="obs-dot" r="4.5" fill="#F0B429" stroke="#141A2B" stroke-width="1.5"/>
+          <text id="obs-txt" text-anchor="middle" dominant-baseline="middle" fill="#F0B429" font-family="IBM Plex Mono,monospace" font-size="9.5" letter-spacing="1.2">YOU</text>
+        </g>
+
+        <g id="moon-marker">
+          <circle r="15" fill="#1D2230"/>
+          <path d="M0 -15 A15 15 0 0 1 0 15 Z" fill="#EBE4D4"/>
+          <circle r="15" fill="none" stroke="#EBE4D4" stroke-opacity=".45"/>
+          <circle r="25" fill="none" stroke="#F0B429" stroke-opacity=".55" stroke-width="1.5"/>
+        </g>
+
+        <g id="legend" font-family="IBM Plex Mono,monospace" font-size="9.5" letter-spacing="1.2" fill="#7D89A5">
+          <line x1="14" y1="344" x2="34" y2="344" stroke="#EBE4D4" stroke-opacity=".7" stroke-dasharray="3 3"/>
+          <text x="40" y="347">MOON&rsquo;S BULGE ALONE</text>
+          <line x1="14" y1="362" x2="34" y2="362" stroke="#F6C445" stroke-opacity=".85" stroke-dasharray="3 3"/>
+          <text x="40" y="365">SUN&rsquo;S BULGE ALONE</text>
+        </g>
+      </svg>
+      <div class="pills" role="group" aria-label="Which pulls to include">
+        <span class="lab">Include</span>
+        <button type="button" id="use-m" aria-pressed="true">Moon&rsquo;s pull</button>
+        <button type="button" id="use-s" aria-pressed="true">Sun&rsquo;s pull</button>
+      </div>
+      <figcaption><span id="phase-cap">—</span><span>Bulge height exaggerated ~2,000,000&times;</span></figcaption>
+    </figure>
+
+    <figure class="stage" id="harbor-stage" style="margin:0">
+      <svg id="harbor" viewBox="0 0 300 230" role="img" aria-label="Side view of a harbor tide staff showing the current water level">
+        <defs>
+          <linearGradient id="skygrad" x1="0" y1="0" x2="0" y2="1">
+            <stop id="sky-top" offset="0%" stop-color="#4F8FC6"/><stop id="sky-bot" offset="100%" stop-color="#B9D6EC"/>
+          </linearGradient>
+        </defs>
+        <rect width="300" height="230" fill="url(#skygrad)"/>
+        <g id="stars-c"></g>
+        <polygon points="150,230 300,95 300,230" fill="#C8B083"/>
+        <line x1="150" y1="230" x2="300" y2="95" stroke="#9C8660" stroke-width="1.5"/>
+
+        <rect x="92" y="30" width="10" height="200" fill="#EDE7D8" stroke="#8C8472" stroke-width=".8"/>
+        <g id="staff-marks"></g>
+
+        <g id="hwlw" font-family="IBM Plex Mono,monospace" font-size="8.5" letter-spacing=".8" fill="#F0B429">
+          <line id="hw-line" x1="58" x2="92" stroke="#F0B429" stroke-width="1.2" stroke-dasharray="3 2"/>
+          <text id="hw-txt" x="56" text-anchor="end" dominant-baseline="middle">HIGH</text>
+          <line id="lw-line" x1="58" x2="92" stroke="#F0B429" stroke-width="1.2" stroke-dasharray="3 2"/>
+          <text id="lw-txt" x="56" text-anchor="end" dominant-baseline="middle">LOW</text>
+        </g>
+
+        <path id="sea" d="" fill="#2E6FA6" fill-opacity=".82"/>
+        <path id="sea-top" d="" fill="none" stroke="#A9D3F0" stroke-width="1.5"/>
+
+        <g id="boat">
+          <path d="M-18 -3 L18 -3 L12 6 L-12 6 Z" fill="#C0533A"/>
+          <line x1="0" y1="-3" x2="0" y2="-30" stroke="#3A3326" stroke-width="1.5"/>
+          <path d="M2 -28 L2 -6 L17 -6 Z" fill="#EDE7D8"/>
+        </g>
+        <text x="292" y="16" text-anchor="end" font-family="IBM Plex Mono,monospace" font-size="9" letter-spacing="1" fill="#E8EDFA" fill-opacity=".8">METRES</text>
+      </svg>
+      <div>
+        <p class="tide-name" id="tide-name" aria-live="polite">Rising tide</p>
+        <p class="tide-sub" id="tide-sub">—</p>
+      </div>
+      <figcaption><span>Tide staff at your harbor</span><span id="clock-cap">—</span></figcaption>
+    </figure>
+  </div>
+
+  <dl class="readout">
+    <div class="cell"><dt>Water level</dt><dd id="r-level">—</dd></div>
+    <div class="cell"><dt>Today&rsquo;s range</dt><dd id="r-range">—</dd></div>
+    <div class="cell"><dt>Tide cycle</dt><dd id="r-cycle">—</dd></div>
+    <div class="cell"><dt>Next high</dt><dd id="r-high">—</dd></div>
+    <div class="cell"><dt>Next low</dt><dd id="r-low">—</dd></div>
+    <div class="cell"><dt>Moon age</dt><dd id="r-age">—</dd></div>
+  </dl>
+
+  <div class="controls">
+    <div class="row">
+      <button type="button" class="btn primary" id="play">Play</button>
+      <div class="seg" role="group" aria-label="Playback speed">
+        <button type="button" id="spd-h" aria-pressed="true">Hours</button>
+        <button type="button" id="spd-d" aria-pressed="false">Days</button>
+      </div>
+      <button type="button" class="btn" id="today">Right now</button>
+      <div class="scrub">
+        <input type="range" id="slider" min="0" max="29.53" step="0.005" value="0" aria-label="Time through the lunar month">
+        <div class="when" id="when">—</div>
+      </div>
+    </div>
+    <div class="ticks" id="ticks">
+      <button type="button" data-i="0">New moon<br><b>Spring</b></button>
+      <button type="button" data-i="1">First quarter<br><b>Neap</b></button>
+      <button type="button" data-i="2">Full moon<br><b>Spring</b></button>
+      <button type="button" data-i="3">Last quarter<br><b>Neap</b></button>
+    </div>
+  </div>
+
+  <section class="chartcard" id="chartcard">
+    <div class="chart-head">
+      <h2>One lunar month at your harbor</h2>
+      <span class="key"><i></i>water level &nbsp; <i class="env"></i>tidal range &nbsp; · click or drag to jump</span>
+    </div>
+    <svg id="month" class="chart" role="img" aria-label="Water level over one lunar month, showing larger spring tides at new and full moon and smaller neap tides at the quarter moons"></svg>
+    <div class="chart-head">
+      <h2>The hours around now</h2>
+      <span class="key">shaded = night &nbsp; · two highs and two lows a day</span>
+    </div>
+    <svg id="zoom" class="chart" role="img" aria-label="Water level over the hours around the current time, with the times of high and low tide"></svg>
+  </section>
+
+  <section class="notes">
+    <div>
+      <h2>Two bulges, not one</h2>
+      <p>The Moon pulls the near-side ocean a little harder than it pulls Earth&rsquo;s center, and pulls Earth&rsquo;s center a little harder than the far-side ocean. That difference stretches the ocean both ways at once. As Earth turns through both bulges, most coasts get two high tides and two low tides a day.</p>
+    </div>
+    <div>
+      <h2>&ldquo;Spring&rdquo; isn&rsquo;t the season</h2>
+      <p>The word means &ldquo;springing up.&rdquo; Spring tides happen twice a month, at new and full moon, when the Sun&rsquo;s and Moon&rsquo;s bulges line up and add together. Neap tides happen at the quarter moons, when the two bulges are at right angles and partly cancel.</p>
+    </div>
+    <div>
+      <h2>The Sun pulls harder but stretches less</h2>
+      <p>The Sun&rsquo;s pull on Earth is about 180&times; the Moon&rsquo;s. Tides, though, come from the <em>difference</em> in pull from one side of Earth to the other, and that drops off with the cube of distance. So the Sun&rsquo;s tide ends up only about 46% as big as the Moon&rsquo;s.</p>
+    </div>
+    <div>
+      <h2>Tides run late every day</h2>
+      <p>While Earth spins, the Moon keeps moving along its orbit, so each spot on Earth needs about 50 extra minutes to face it again. High tides come about 12&nbsp;h&nbsp;25&nbsp;min apart, so each day&rsquo;s tides are roughly an hour later than the day before.</p>
+    </div>
+  </section>
+
+  <footer>Equilibrium tide model: a planet covered in ocean, with the bulges lined up exactly with the Sun and Moon &middot; real coasts are shaped by continents and ocean basins, so their high tides lag, spring tides often arrive 1&ndash;2 days after new and full moon, and ranges vary from a few centimetres to over 15&nbsp;m &middot; the model leaves out the Moon&rsquo;s tilt (which makes one high tide of the day bigger than the other) and its changing distance (which causes extra-high &ldquo;king tides&rdquo;) &middot; heights assume a 1&nbsp;m lunar tide &middot; sizes and distances not to scale</footer>
+</div>
+
+<script>
+(function(){
+  var SYN = 29.530588853;                 // synodic month, days
+  var EPOCH = Date.UTC(2000,0,6,18,14);   // a known new moon
+  var TAU = Math.PI*2;
+  var AM = 1.0, AS = 0.46;                // lunar and solar tide amplitudes, metres
+  var CX = 230, CY = 190, RE = 30, BASE = 18, KPX = 11, ORB = 128;   // top-down diagram
+  var MSL = 140, HS = 40;                 // harbor: mean sea level y, px per metre
+
+  // t = days since new moon; c = offset that sets local clock time (frac(t+c) = time of day)
+  var t = 0, c = 0, useM = true, useS = true, playing = false, rate = 0.125, last = 0, raf = 0;
+
+  var PHASES = ["New moon","Waxing crescent","First quarter","Waxing gibbous","Full moon","Waning gibbous","Last quarter","Waning crescent"];
+  function phaseIndex(d){
+    if(d<1.0 || d>SYN-1.0) return 0;
+    if(Math.abs(d-SYN/4)<0.75) return 2;
+    if(Math.abs(d-SYN/2)<1.0) return 4;
+    if(Math.abs(d-3*SYN/4)<0.75) return 6;
+    if(d<SYN/4) return 1;
+    if(d<SYN/2) return 3;
+    if(d<3*SYN/4) return 5;
+    return 7;
+  }
+
+  function frac(x){ return x-Math.floor(x); }
+  function wrap(d){ return ((d%SYN)+SYN)%SYN; }
+  function obsAngle(tt){ return TAU*(tt+c)-Math.PI; }   // 0 = local noon (facing the Sun)
+  function moonAngle(tt){ return TAU*tt/SYN; }          // elongation from the Sun
+
+  function height(tt){
+    var p = obsAngle(tt), m = moonAngle(tt), h = 0;
+    if(useM) h += AM*Math.cos(2*(p-m));
+    if(useS) h += AS*Math.cos(2*p);
+    return h;
+  }
+  // high-to-low range of the combined semidiurnal tide: 2|Am + As e^(2im)|
+  function rangeAt(tt){
+    var a = useM?AM:0, b = useS?AS:0, m = moonAngle(tt);
+    return 2*Math.sqrt(a*a+b*b+2*a*b*Math.cos(2*m));
+  }
+  function extremes(t0,t1){
+    var out = [], step = 1/288, a = height(t0-step), b = height(t0);
+    for(var x=t0; x<=t1; x+=step){
+      var n = height(x+step), den = a-2*b+n;
+      if((b>a && b>=n) || (b<a && b<=n)){
+        var off = den!==0 ? 0.5*(a-n)/den*step : 0;
+        out.push({t:x+off, h:b, hi:b>a});
+      }
+      a = b; b = n;
+    }
+    return out;
+  }
+
+  function fmtTime(h){
+    h = ((h%24)+24)%24;
+    var hh = Math.floor(h), mm = Math.round((h-hh)*60);
+    if(mm===60){ mm=0; hh=(hh+1)%24; }
+    var ap = hh<12?"am":"pm", h12 = hh%12; if(h12===0) h12 = 12;
+    return h12+":"+(mm<10?"0":"")+mm+" "+ap;
+  }
+  function clockAt(tt){ return fmtTime(frac(tt+c)*24); }
+  function fmtM(h){ return (h>=0?"+":"−")+Math.abs(h).toFixed(2)+" m"; }
+
+  function hex(s){ var n=parseInt(s.slice(1),16); return [n>>16,(n>>8)&255,n&255]; }
+  function mix(a,b,f){ var A=hex(a),B=hex(b); return "rgb("+Math.round(A[0]+(B[0]-A[0])*f)+","+Math.round(A[1]+(B[1]-A[1])*f)+","+Math.round(A[2]+(B[2]-A[2])*f)+")"; }
+  function smooth(e0,e1,x){ var k=Math.min(1,Math.max(0,(x-e0)/(e1-e0))); return k*k*(3-2*k); }
+
+  // --- static decoration -------------------------------------------------
+  function stars(id,w,h,ox,oy,n){
+    var s = "";
+    for(var i=0;i<n;i++){
+      var x=(ox+Math.random()*w).toFixed(1), y=(oy+Math.random()*h).toFixed(1);
+      var r=(0.5+Math.random()*0.9).toFixed(2), o=(0.12+Math.random()*0.45).toFixed(2);
+      s += '<circle cx="'+x+'" cy="'+y+'" r="'+r+'" fill="#E8EDFA" opacity="'+o+'"/>';
+    }
+    document.getElementById(id).innerHTML = s;
+  }
+  stars("stars-a",520,380,0,0,70);
+  stars("stars-c",300,120,0,0,35);
+
+  var ghosts = document.getElementById("ghosts"), gh = "";
+  for(var i=0;i<4;i++){
+    var ga = i*Math.PI/2, gx = CX+ORB*Math.cos(ga), gy = CY-ORB*Math.sin(ga);
+    gh += '<g class="ghost" data-i="'+i+'" transform="translate('+gx.toFixed(1)+','+gy.toFixed(1)+')" style="cursor:pointer">'
+      + '<circle r="16" fill="transparent"/><circle r="7" fill="#1D2230"/>'
+      + '<path d="M0 -7 A7 7 0 0 1 0 7 Z" fill="#EBE4D4" opacity=".55"/>'
+      + '<circle r="7" fill="none" stroke="#7D89A5" stroke-opacity=".45"/></g>';
+  }
+  ghosts.innerHTML = gh;
+
+  var sm = "";
+  for(var q=-2; q<=2.5; q+=0.25){
+    var y = MSL - q*HS, major = Math.abs(q-Math.round(q))<1e-9;
+    sm += '<line x1="92" x2="'+(major?102:97)+'" y1="'+y+'" y2="'+y+'" stroke="#2C3140" stroke-width="'+(major?1.4:.8)+'"/>';
+    if(major) sm += '<text x="106" y="'+(y+3)+'" font-family="IBM Plex Mono,monospace" font-size="9" fill="#E8EDFA">'+(q>0?"+":q<0?"−":"")+Math.abs(q)+'</text>';
+  }
+  document.getElementById("staff-marks").innerHTML = sm;
+
+  // --- elements ----------------------------------------------------------
+  function $(id){ return document.getElementById(id); }
+  var elWater=$("water"), elEnvM=$("env-m"), elEnvS=$("env-s"), elLegend=$("legend"), elAxis=$("axis"),
+      elMarker=$("moon-marker"), elObsDot=$("obs-dot"), elObsLine=$("obs-line"), elObsTxt=$("obs-txt"),
+      elSea=$("sea"), elSeaTop=$("sea-top"), elBoat=$("boat"), elStarsC=$("stars-c"),
+      elSkyTop=$("sky-top"), elSkyBot=$("sky-bot"),
+      elHwL=$("hw-line"), elHwT=$("hw-txt"), elLwL=$("lw-line"), elLwT=$("lw-txt"),
+      elSlider=$("slider"), elPlay=$("play"), month=$("month"), zoom=$("zoom"),
+      tickBtns=$("ticks").querySelectorAll("button");
+
+  function envPath(fm,fs,m){
+    var d = "";
+    for(var i=0;i<=144;i++){
+      var a = i/144*TAU, r = RE+BASE+KPX*(fm*AM*Math.cos(2*(a-m)) + fs*AS*Math.cos(2*a));
+      d += (i?"L":"M")+(CX+r*Math.cos(a)).toFixed(1)+" "+(CY-r*Math.sin(a)).toFixed(1);
+    }
+    return d+"Z";
+  }
+
+  // --- month chart (redrawn on resize / toggle / month rollover) ---------
+  var MX0, MX1, MYC, MYS, mCurLine, mCurDot;
+  function moonIcon(x,y,r,k){
+    var s = '<circle cx="'+x+'" cy="'+y+'" r="'+r+'" fill="#1D2230" stroke="#7D89A5" stroke-opacity=".6"/>';
+    if(k===2) s += '<circle cx="'+x+'" cy="'+y+'" r="'+r+'" fill="#EBE4D4"/>';
+    if(k===1||k===3) s += '<path d="M'+x+' '+(y-r)+' A'+r+' '+r+' 0 0 '+(k===1?1:0)+' '+x+' '+(y+r)+' Z" fill="#EBE4D4"/>';
+    return s;
+  }
+  function drawMonth(){
+    var W = month.clientWidth || 900, H = 180;
+    month.setAttribute("viewBox","0 0 "+W+" "+H);
+    MX0 = 34; MX1 = W-10;
+    var Y0 = 44, Y1 = H-24; MYC = (Y0+Y1)/2; MYS = (Y1-Y0)/2/1.55;
+    function X(tt){ return MX0+(tt/SYN)*(MX1-MX0); }
+    function Y(h){ return MYC-h*MYS; }
+    var s = "", k;
+    var both = useM && useS;
+    if(both){
+      for(k=0;k<=4;k++){
+        var x0 = X(Math.max(0,k*SYN/4-1.5)), x1 = X(Math.min(SYN,k*SYN/4+1.5));
+        s += '<rect class="'+(k%2?"band-n":"band-s")+'" x="'+x0.toFixed(1)+'" y="'+(Y0-6)+'" width="'+(x1-x0).toFixed(1)+'" height="'+(Y1-Y0+12)+'"/>';
+      }
+    }
+    [-1,0,1].forEach(function(v){
+      s += '<line class="grid" x1="'+MX0+'" x2="'+MX1+'" y1="'+Y(v).toFixed(1)+'" y2="'+Y(v).toFixed(1)+'"'+(v===0?' stroke-dasharray="2 3"':'')+'/>';
+      s += '<text x="'+(MX0-6)+'" y="'+(Y(v)+3.5).toFixed(1)+'" text-anchor="end">'+(v>0?"+1":v<0?"−1":"0")+'</text>';
+    });
+    for(var d=0; d<=SYN; d+=5){
+      s += '<text x="'+X(d).toFixed(1)+'" y="'+(H-6)+'" text-anchor="middle">'+(d===0?"day 0":d)+'</text>';
+    }
+    var up = "", dn = "", cv = "";
+    for(var tt=0; tt<=SYN+1e-9; tt+=0.25){
+      var r2 = rangeAt(tt)/2;
+      up += (tt?"L":"M")+X(tt).toFixed(1)+" "+Y(r2).toFixed(1);
+      dn += (tt?"L":"M")+X(tt).toFixed(1)+" "+Y(-r2).toFixed(1);
+    }
+    for(var u=0, n=Math.ceil(SYN*96); u<=n; u++){
+      var tu = Math.min(SYN, u/96);
+      cv += (u?"L":"M")+X(tu).toFixed(1)+" "+Y(height(tu)).toFixed(1);
+    }
+    s += '<path class="curve" d="'+cv+'"/>';
+    s += '<path class="env" d="'+up+'"/><path class="env" d="'+dn+'"/>';
+    for(k=0;k<=4;k++){
+      var xi = X(k*SYN/4), anchor = k===0?"start":k===4?"end":"middle", xo = k===0?-6:k===4?6:0;
+      s += moonIcon(xi.toFixed(1)+"", 12, 6, k%4);
+      if(both) s += '<text class="strong" x="'+(xi+xo).toFixed(1)+'" y="31" text-anchor="'+anchor+'" letter-spacing="1">'+(k%2?"NEAP":"SPRING")+'</text>';
+    }
+    s += '<line id="m-cur" class="cursor" y1="'+(Y0-6)+'" y2="'+(Y1+6)+'"/><circle id="m-dot" class="dot" r="4.5"/>';
+    month.innerHTML = s;
+    mCurLine = $("m-cur"); mCurDot = $("m-dot");
+  }
+
+  // --- hours-around-now chart (redrawn every frame) ----------------------
+  function drawZoom(){
+    var W = zoom.clientWidth || 900, H = 180, narrow = W<600, half = narrow?0.6:1.0;
+    zoom.setAttribute("viewBox","0 0 "+W+" "+H);
+    var X0 = 34, X1 = W-10, Y0 = 32, Y1 = H-26, YC = (Y0+Y1)/2, YS = (Y1-Y0)/2/1.55;
+    var a = t-half, b = t+half;
+    function X(tt){ return X0+(tt-a)/(b-a)*(X1-X0); }
+    function Y(h){ return YC-h*YS; }
+    var s = "";
+    // night: 6 pm to 6 am local
+    for(var n=Math.floor(a+c)-1; n<=Math.ceil(b+c)+1; n++){
+      var ns = Math.max(a, n-c-0.25), ne = Math.min(b, n-c+0.25);
+      if(ne>ns) s += '<rect class="night" x="'+X(ns).toFixed(1)+'" y="'+(Y0-10)+'" width="'+(X(ne)-X(ns)).toFixed(1)+'" height="'+(Y1-Y0+20)+'"/>';
+    }
+    [-1,0,1].forEach(function(v){
+      s += '<line class="grid" x1="'+X0+'" x2="'+X1+'" y1="'+Y(v).toFixed(1)+'" y2="'+Y(v).toFixed(1)+'"'+(v===0?' stroke-dasharray="2 3"':'')+'/>';
+      s += '<text x="'+(X0-6)+'" y="'+(Y(v)+3.5).toFixed(1)+'" text-anchor="end">'+(v>0?"+1":v<0?"−1":"0")+'</text>';
+    });
+    var LBL = ["midnight","6 am","noon","6 pm"];
+    for(var q=Math.ceil((a+c)*4); q<=Math.floor((b+c)*4); q++){
+      var tq = q/4-c, xq = X(tq);
+      if(xq<X0+20 || xq>X1-20) continue;
+      s += '<text x="'+xq.toFixed(1)+'" y="14" text-anchor="middle">'+LBL[((q%4)+4)%4]+'</text>';
+    }
+    var cv = "", N = 240;
+    for(var i=0;i<=N;i++){ var ti = a+(b-a)*i/N; cv += (i?"L":"M")+X(ti).toFixed(1)+" "+Y(height(ti)).toFixed(1); }
+    s += '<path class="curve" d="'+cv+'" stroke-width="2"/>';
+    extremes(a,b).forEach(function(e){
+      var xe = X(e.t), ye = Y(e.h);
+      if(xe<X0+4 || xe>X1-4) return;
+      var edge = narrow?45:90, anchor = xe<X0+edge ? "start" : xe>X1-edge ? "end" : "middle";
+      var lbl = (e.hi?"High ":"Low ")+clockAt(e.t) + (narrow?"":" · "+(e.h>=0?"+":"−")+Math.abs(e.h).toFixed(1)+" m");
+      s += '<circle class="ext" cx="'+xe.toFixed(1)+'" cy="'+ye.toFixed(1)+'" r="3.5"/>';
+      s += '<text class="strong" x="'+xe.toFixed(1)+'" y="'+(e.hi?ye-9:ye+17).toFixed(1)+'" text-anchor="'+anchor+'">'+lbl+'</text>';
+    });
+    var xn = X(t);
+    s += '<line class="cursor" x1="'+xn+'" x2="'+xn+'" y1="'+(Y0-10)+'" y2="'+(Y1+10)+'" stroke-dasharray="3 3"/>';
+    s += '<circle class="dot" cx="'+xn+'" cy="'+Y(height(t)).toFixed(1)+'" r="5"/>';
+    s += '<text x="'+(xn+6)+'" y="'+(H-4)+'" fill="var(--accent-ink)" style="fill:var(--accent-ink)">now</text>';
+    zoom.innerHTML = s;
+  }
+
+  // --- main render -------------------------------------------------------
+  function render(){
+    var m = moonAngle(t), p = obsAngle(t), h = height(t), R = rangeAt(t);
+
+    // top-down view
+    elWater.setAttribute("d", envPath(useM?1:0, useS?1:0, m));
+    var both = useM && useS;
+    elEnvM.style.display = elEnvS.style.display = elLegend.style.display = both ? "" : "none";
+    if(both){ elEnvM.setAttribute("d", envPath(1,0,m)); elEnvS.setAttribute("d", envPath(0,1,m)); }
+    var mx = CX+ORB*Math.cos(m), my = CY-ORB*Math.sin(m);
+    elMarker.setAttribute("transform","translate("+mx.toFixed(1)+","+my.toFixed(1)+")");
+    elAxis.setAttribute("x1",(CX-84*Math.cos(m)).toFixed(1)); elAxis.setAttribute("y1",(CY+84*Math.sin(m)).toFixed(1));
+    elAxis.setAttribute("x2",(CX+(ORB-15)*Math.cos(m)).toFixed(1)); elAxis.setAttribute("y2",(CY-(ORB-15)*Math.sin(m)).toFixed(1));
+    var cp = Math.cos(p), sp = Math.sin(p), rl = RE+BASE+KPX*1.6+14;
+    elObsDot.setAttribute("cx",(CX+RE*cp).toFixed(1)); elObsDot.setAttribute("cy",(CY-RE*sp).toFixed(1));
+    elObsLine.setAttribute("x1",(CX+RE*cp).toFixed(1)); elObsLine.setAttribute("y1",(CY-RE*sp).toFixed(1));
+    elObsLine.setAttribute("x2",(CX+(rl-9)*cp).toFixed(1)); elObsLine.setAttribute("y2",(CY-(rl-9)*sp).toFixed(1));
+    elObsTxt.setAttribute("x",(CX+rl*cp).toFixed(1)); elObsTxt.setAttribute("y",(CY-rl*sp).toFixed(1));
+
+    // harbor
+    var yW = MSL-h*HS, wp = t*180, sea = "", top = "";
+    for(var x=0; x<=300; x+=10){
+      var yy = (yW+1.6*Math.sin(x/17+wp)).toFixed(1);
+      top += (x?"L":"M")+x+" "+yy;
+    }
+    elSeaTop.setAttribute("d", top);
+    elSea.setAttribute("d", top+"L300 230 L0 230 Z");
+    elBoat.setAttribute("transform","translate(44,"+(yW+1.6*Math.sin(44/17+wp)).toFixed(1)+")");
+    var yH = MSL-R/2*HS, yL = MSL+R/2*HS;
+    elHwL.setAttribute("y1",yH); elHwL.setAttribute("y2",yH); elHwT.setAttribute("y",yH);
+    elLwL.setAttribute("y1",yL); elLwL.setAttribute("y2",yL); elLwT.setAttribute("y",yL);
+    var day = smooth(-0.2,0.2,cp);
+    elSkyTop.setAttribute("stop-color", mix("#070B16","#4F8FC6",day));
+    elSkyBot.setAttribute("stop-color", mix("#1A2340","#B9D6EC",day));
+    elStarsC.setAttribute("opacity", (1-day).toFixed(2));
+
+    // status text
+    var s = R>0 ? h/(R/2) : 0, dh = height(t+0.004)-height(t-0.004);
+    $("tide-name").textContent = s>0.94 ? "High tide" : s<-0.94 ? "Low tide" : dh>0 ? "Rising tide" : "Falling tide";
+    var qq = Math.cos(2*m), toNeap = Math.sin(2*m)>0, cyc, sub;
+    if(both){
+      if(qq>0.8){ cyc = "Spring"; sub = "Spring tides · Sun and Moon in line"; }
+      else if(qq<-0.8){ cyc = "Neap"; sub = "Neap tides · Sun and Moon at right angles"; }
+      else if(toNeap){ cyc = "To neap"; sub = "Range shrinking toward neap"; }
+      else { cyc = "To spring"; sub = "Range growing toward spring"; }
+    } else if(useM){ cyc = "None"; sub = "Moon only · same range every day"; }
+    else { cyc = "None"; sub = "Sun only · highs at noon and midnight"; }
+    $("tide-sub").textContent = sub;
+    $("clock-cap").textContent = clockAt(t)+" local";
+    $("phase-cap").textContent = PHASES[phaseIndex(t)]+" · day "+t.toFixed(1);
+
+    // readouts
+    var ex = extremes(t+0.002, t+1.05), nh = null, nl = null;
+    for(var i=0;i<ex.length;i++){ if(ex[i].hi && !nh) nh = ex[i]; if(!ex[i].hi && !nl) nl = ex[i]; }
+    $("r-level").textContent = fmtM(h);
+    $("r-range").textContent = R.toFixed(1)+" m";
+    $("r-cycle").textContent = cyc;
+    $("r-high").textContent = nh ? clockAt(nh.t) : "—";
+    $("r-low").textContent = nl ? clockAt(nl.t) : "—";
+    $("r-age").textContent = t.toFixed(1)+" d";
+    $("when").textContent = "Day "+t.toFixed(1)+" of 29.5 · "+clockAt(t);
+
+    // charts
+    if(mCurLine){
+      var xc = (MX0+(t/SYN)*(MX1-MX0)).toFixed(1);
+      mCurLine.setAttribute("x1",xc); mCurLine.setAttribute("x2",xc);
+      mCurDot.setAttribute("cx",xc); mCurDot.setAttribute("cy",(MYC-h*MYS).toFixed(1));
+    }
+    drawZoom();
+
+    if(document.activeElement!==elSlider) elSlider.value = t.toFixed(3);
+    var k = Math.round(t/(SYN/4)), near = Math.abs(t-k*SYN/4)<1.5;
+    for(var b=0;b<tickBtns.length;b++) tickBtns[b].setAttribute("aria-current", near && b===k%4 ? "true" : "false");
+  }
+
+  function setT(d){ t = wrap(d); render(); }
+  function advance(dt){
+    var nt = t+dt;
+    if(nt>=SYN){ nt -= SYN; c = frac(c+SYN); t = nt; drawMonth(); }   // keep the clock continuous across months
+    t = nt; render();
+  }
+
+  // --- interaction -------------------------------------------------------
+  elSlider.addEventListener("input", function(){ setT(parseFloat(elSlider.value)); });
+  for(var tb=0; tb<tickBtns.length; tb++){
+    tickBtns[tb].addEventListener("click", function(e){ stop(); setT(parseInt(e.currentTarget.dataset.i,10)*SYN/4); });
+  }
+  ghosts.addEventListener("click", function(e){
+    var g = e.target.closest(".ghost"); if(!g) return;
+    stop(); setT(parseInt(g.dataset.i,10)*SYN/4);
+  });
+
+  var orbit = $("orbit"), dragging = false;
+  function dragTo(ev){
+    var pt = orbit.createSVGPoint(); pt.x = ev.clientX; pt.y = ev.clientY;
+    pt = pt.matrixTransform(orbit.getScreenCTM().inverse());
+    var ang = Math.atan2(-(pt.y-CY), pt.x-CX); if(ang<0) ang += TAU;
+    setT(ang/TAU*SYN);
+  }
+  orbit.addEventListener("pointerdown", function(ev){
+    if(ev.target.closest(".ghost")) return;
+    dragging = true; stop(); orbit.setPointerCapture(ev.pointerId); dragTo(ev); ev.preventDefault();
+  });
+  orbit.addEventListener("pointermove", function(ev){ if(dragging) dragTo(ev); });
+  orbit.addEventListener("pointerup", function(ev){ dragging = false; try{ orbit.releasePointerCapture(ev.pointerId); }catch(e){} });
+  orbit.addEventListener("pointercancel", function(){ dragging = false; });
+
+  var mDrag = false;
+  function monthTo(ev){
+    var r = month.getBoundingClientRect(), x = ev.clientX-r.left;
+    setT(Math.min(SYN-1e-6, Math.max(0, (x-MX0)/(MX1-MX0)*SYN)));
+  }
+  month.addEventListener("pointerdown", function(ev){ mDrag = true; stop(); month.setPointerCapture(ev.pointerId); monthTo(ev); ev.preventDefault(); });
+  month.addEventListener("pointermove", function(ev){ if(mDrag) monthTo(ev); });
+  month.addEventListener("pointerup", function(ev){ mDrag = false; try{ month.releasePointerCapture(ev.pointerId); }catch(e){} });
+  month.addEventListener("pointercancel", function(){ mDrag = false; });
+
+  function stop(){ playing = false; elPlay.textContent = "Play"; if(raf) cancelAnimationFrame(raf); raf = 0; }
+  elPlay.addEventListener("click", function(){
+    if(playing){ stop(); return; }
+    playing = true; elPlay.textContent = "Pause"; last = performance.now();
+    (function loop(now){
+      if(!playing) return;
+      var dt = Math.min(0.1,(now-last)/1000); last = now;
+      advance(dt*rate);
+      raf = requestAnimationFrame(loop);
+    })(last);
+  });
+
+  var sh = $("spd-h"), sd = $("spd-d");
+  function setSpeed(days){
+    rate = days ? 1.0 : 0.125;                 // 1 day/s, or 3 hours/s
+    sh.setAttribute("aria-pressed", String(!days)); sd.setAttribute("aria-pressed", String(days));
+  }
+  sh.addEventListener("click", function(){ setSpeed(false); });
+  sd.addEventListener("click", function(){ setSpeed(true); });
+
+  var bm = $("use-m"), bs = $("use-s");
+  function setUse(m,s){
+    if(!m && !s) return;                       // keep at least one pull on
+    useM = m; useS = s;
+    bm.setAttribute("aria-pressed", String(m)); bs.setAttribute("aria-pressed", String(s));
+    drawMonth(); render();
+  }
+  bm.addEventListener("click", function(){ setUse(!useM, useS); });
+  bs.addEventListener("click", function(){ setUse(useM, !useS); });
+
+  function goNow(){
+    var now = new Date();
+    var age = wrap((now.getTime()-EPOCH)/86400000);
+    var H = now.getHours()+now.getMinutes()/60;
+    c = frac(H/24-frac(age)); t = age;
+    drawMonth(); render();
+  }
+  $("today").addEventListener("click", function(){ stop(); goNow(); });
+
+  if(window.ResizeObserver){
+    new ResizeObserver(function(){ drawMonth(); render(); }).observe($("chartcard"));
+  } else {
+    window.addEventListener("resize", function(){ drawMonth(); render(); });
+  }
+
+  goNow();
+})();
+</script>
+</body>
+</html>
