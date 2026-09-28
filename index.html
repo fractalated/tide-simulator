@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="An interactive tide simulator: move the Moon around Earth and watch the tidal bulges, the water at a harbor, and the monthly cycle of spring and neap tides change together.">
 <meta name="color-scheme" content="light dark">
 <meta property="og:title" content="Tide Simulator">
@@ -105,6 +105,11 @@
   .chart .cursor{stroke:var(--accent-ink);stroke-width:1.5}
   .chart .dot{fill:var(--accent);stroke:var(--surface);stroke-width:2}
   .chart .ext{fill:var(--sea-ink);stroke:var(--surface);stroke-width:1.5}
+
+  /* phones: leave room so Safari's bottom toolbar never covers the end of the page */
+  @media (max-width:560px){
+    .wrap{padding-bottom:calc(140px + env(safe-area-inset-bottom,0px))}
+  }
 
   .notes{margin-top:30px;display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:22px}
   .notes h2{font-family:"Instrument Serif",Georgia,serif;font-weight:400;font-size:20px;margin:0 0 5px}
