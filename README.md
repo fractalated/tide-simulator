@@ -1,7 +1,7 @@
 # Tide Simulator
 
 An interactive tide simulator for the classroom, a companion to the
-[Moon Phase Orrery](https://fractalated.github.io/moon-phase-orrery/). Move the
+[Moon Phase Simulator](https://fractalated.github.io/moon-phase-simulator/). Move the
 Moon around Earth and watch the ocean bulges, the water at one harbor, and the
 monthly spring–neap cycle all change together.
 
@@ -57,7 +57,7 @@ continents and ocean basins. On real coasts:
 
 Heights assume a 1.0 m lunar tide and a 0.46 m solar tide. That gives a
 spring range of about 2.9 m and a neap range of about 1.1 m. The moon age uses
-the same mean synodic month as the Moon Phase Orrery. For real predictions at a
+the same mean synodic month as the Moon Phase Simulator. For real predictions at a
 real place, use [NOAA Tides & Currents](https://tidesandcurrents.noaa.gov/).
 
 ## Running it
