@@ -5,6 +5,8 @@ An interactive tide simulator for the classroom, a companion to the
 Moon around Earth and watch the ocean bulges, the water at one harbor, and the
 monthly spring–neap cycle all change together.
 
+**[Open the simulator →](https://fractalated.github.io/tide-simulator/)**
+
 ## What it does
 
 - **Three linked views.** A top-down view of Earth's tidal bulges and the
