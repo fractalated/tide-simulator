@@ -42,10 +42,14 @@
   @media (max-width:820px){.stages{grid-template-columns:1fr}}
 
   .stage{background:radial-gradient(120% 90% at 70% 10%,var(--sky-2),var(--sky-1));border:1px solid var(--sky-line);border-radius:16px;padding:12px 12px 10px;display:flex;flex-direction:column;overflow:hidden}
-  .stage svg{display:block;width:100%;height:auto;max-width:100%;touch-action:none}
+  .stage svg{display:block;width:100%;height:auto;max-width:100%}
   .stage figcaption{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--sky-dim);margin-top:8px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
-  #orbit{cursor:grab}
-  #orbit:active{cursor:grabbing}
+  .transport{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:8px}
+  .transport button{display:flex;flex-direction:column;align-items:center;gap:3px;background:transparent;color:var(--sky-text);border:1px solid var(--sky-line);border-radius:10px;padding:7px 0 5px;cursor:pointer;font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:9.5px;letter-spacing:.08em;text-transform:uppercase}
+  .transport button svg{width:22px;height:14px;fill:currentColor}
+  .transport button span{color:var(--sky-dim)}
+  .transport button[aria-pressed="true"]{background:var(--sky-line);border-color:#F0B429;color:#F0B429}
+  .transport button[aria-pressed="true"] span{color:var(--sky-text)}
   #harbor-stage{justify-content:space-between}
   #harbor{border-radius:10px}
 
@@ -77,14 +81,14 @@
   .ticks button{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:10px;line-height:1.3;text-align:center;background:transparent;border:0;border-top:1px solid var(--line);padding:7px 1px 0;color:var(--dim);cursor:pointer}
   .ticks button b{font-weight:500;letter-spacing:.08em;text-transform:uppercase}
   .ticks button:hover,.ticks button[aria-current="true"]{color:var(--accent-ink);border-top-color:var(--accent)}
-  .presets{display:flex;align-items:center;gap:10px 18px;flex-wrap:wrap;margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
-  .presets .head{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
-  .preset-grid{flex:1 1 420px;display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-  .preset{display:flex;flex-direction:column;gap:4px}
-  .preset .name{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
-  .preset .btns{display:flex;gap:6px}
-  .preset .btn{flex:1;padding:7px 6px}
-  .preset .btn[aria-pressed="true"]{border-color:var(--accent);color:var(--accent-ink);background:var(--surface)}
+  .presets{margin-top:10px}
+  .presets .head{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--sky-dim);margin:0 0 5px}
+  .preset-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .preset{display:flex;flex-direction:column;gap:3px}
+  .preset .name{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--sky-text)}
+  .preset .btns{display:flex;gap:4px}
+  .preset button{flex:1;font-family:"Archivo",sans-serif;font-size:13px;font-weight:500;background:transparent;color:var(--sky-text);border:1px solid var(--sky-line);border-radius:8px;padding:7px 2px;cursor:pointer}
+  .preset button[aria-pressed="true"]{background:var(--sky-line);border-color:#F0B429;color:#F0B429}
 
   .chartcard{margin-top:16px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px 10px}
   .chart-head{display:flex;justify-content:space-between;align-items:baseline;gap:4px 12px;flex-wrap:wrap}
@@ -92,8 +96,8 @@
   .chart-head .key{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
   .key i{display:inline-block;width:16px;height:0;vertical-align:middle;margin-right:5px;border-top:2px solid var(--sea-ink)}
   .key i.env{border-top:1.5px dashed var(--accent)}
-  svg.chart{display:block;width:100%;height:180px;touch-action:none;margin-top:4px}
-  #month{cursor:ew-resize;margin-bottom:14px}
+  svg.chart{display:block;width:100%;height:180px;margin-top:4px}
+  #month{cursor:pointer;margin-bottom:14px}
   .chart text{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:10px;fill:var(--dim)}
   .chart text.strong{fill:var(--text)}
   .chart .grid{stroke:var(--line);stroke-width:1}
@@ -108,7 +112,12 @@
 
   /* phones: leave room so Safari's bottom toolbar never covers the end of the page */
   @media (max-width:560px){
-    .wrap{padding-bottom:calc(140px + env(safe-area-inset-bottom,0px))}
+    .wrap{padding-top:18px;padding-bottom:calc(140px + env(safe-area-inset-bottom,0px))}
+    header{margin-bottom:14px}
+    .lede{font-size:14px}
+    .stages{gap:12px}
+    .stage{padding:10px 10px 8px}
+    .tide-name{font-size:23px;margin-top:8px}
   }
 
   .notes{margin-top:30px;display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:22px}
@@ -131,12 +140,12 @@
   <header>
     <p class="eyebrow">Sun · Earth · Moon · Ocean</p>
     <h1>Tide Simulator</h1>
-    <p class="lede">Drag the Moon, or play time forward. The left panel shows the ocean&rsquo;s tidal bulges from above. The right panel shows the water rising and falling at one harbor. The chart shows a whole month of tides, with spring and neap tides marked.</p>
+    <p class="lede">Use the arrow buttons to run time forward or back, or tap a preset to jump to a spring, normal or neap tide. Watch the ocean bulges from above and the water rising and falling at the harbor.</p>
   </header>
 
   <div class="stages">
     <figure class="stage" id="orbit-stage" style="margin:0">
-      <svg id="orbit" viewBox="0 0 520 380" role="img" aria-label="Top-down view of Earth, its ocean bulges, and the Moon's orbit, with sunlight arriving from the right">
+      <svg id="orbit" viewBox="0 40 520 332" role="img" aria-label="Top-down view of Earth, its ocean bulges, and the Moon's orbit, with sunlight arriving from the right">
         <defs>
           <radialGradient id="sunglow" cx="85%" cy="50%" r="60%">
             <stop offset="0%" stop-color="#FFE9A8"/><stop offset="45%" stop-color="#F6C445"/><stop offset="100%" stop-color="#C9820E"/>
@@ -186,6 +195,13 @@
           <text x="40" y="365">SUN&rsquo;S BULGE ALONE</text>
         </g>
       </svg>
+      <div class="transport" id="transport" role="group" aria-label="Move time">
+        <button type="button" data-rate="-1" aria-label="Fast reverse, one day per second" aria-pressed="false"><svg viewBox="0 0 20 14" aria-hidden="true"><path d="M9 1 1 7l8 6zM18 1l-8 6 8 6z"/></svg><span>Fast</span></button>
+        <button type="button" data-rate="-0.125" aria-label="Slow reverse, three hours per second" aria-pressed="false"><svg viewBox="0 0 20 14" aria-hidden="true"><path d="M14 1 6 7l8 6z"/></svg><span>Slow</span></button>
+        <button type="button" data-rate="0" aria-label="Pause" aria-pressed="true"><svg viewBox="0 0 20 14" aria-hidden="true"><path d="M6 1h3v12H6zM11 1h3v12h-3z"/></svg><span>Pause</span></button>
+        <button type="button" data-rate="0.125" aria-label="Slow forward, three hours per second" aria-pressed="false"><svg viewBox="0 0 20 14" aria-hidden="true"><path d="m6 1 8 6-8 6z"/></svg><span>Slow</span></button>
+        <button type="button" data-rate="1" aria-label="Fast forward, one day per second" aria-pressed="false"><svg viewBox="0 0 20 14" aria-hidden="true"><path d="m2 1 8 6-8 6zM11 1l8 6-8 6z"/></svg><span>Fast</span></button>
+      </div>
       <div class="pills" role="group" aria-label="Which pulls to include">
         <span class="lab">Include</span>
         <button type="button" id="use-m" aria-pressed="true">Moon&rsquo;s pull</button>
@@ -195,7 +211,7 @@
     </figure>
 
     <figure class="stage" id="harbor-stage" style="margin:0">
-      <svg id="harbor" viewBox="0 0 300 230" role="img" aria-label="Side view of a harbor tide staff showing the current water level">
+      <svg id="harbor" viewBox="0 24 300 190" role="img" aria-label="Side view of a harbor tide staff showing the current water level">
         <defs>
           <linearGradient id="skygrad" x1="0" y1="0" x2="0" y2="1">
             <stop id="sky-top" offset="0%" stop-color="#4F8FC6"/><stop id="sky-bot" offset="100%" stop-color="#B9D6EC"/>
@@ -224,8 +240,22 @@
           <line x1="0" y1="-3" x2="0" y2="-30" stroke="#3A3326" stroke-width="1.5"/>
           <path d="M2 -28 L2 -6 L17 -6 Z" fill="#EDE7D8"/>
         </g>
-        <text x="292" y="16" text-anchor="end" font-family="IBM Plex Mono,monospace" font-size="9" letter-spacing="1" fill="#E8EDFA" fill-opacity=".8">METRES</text>
+        <text x="292" y="38" text-anchor="end" font-family="IBM Plex Mono,monospace" font-size="9" letter-spacing="1" fill="#E8EDFA" fill-opacity=".8">METRES</text>
       </svg>
+      <div class="presets">
+        <p class="head">Show me a tide</p>
+        <div class="preset-grid" id="presets">
+          <div class="preset"><span class="name">Neap</span><div class="btns">
+            <button type="button" data-kind="neap" data-hi="1">High</button>
+            <button type="button" data-kind="neap" data-hi="0">Low</button></div></div>
+          <div class="preset"><span class="name">Normal</span><div class="btns">
+            <button type="button" data-kind="normal" data-hi="1">High</button>
+            <button type="button" data-kind="normal" data-hi="0">Low</button></div></div>
+          <div class="preset"><span class="name">Spring</span><div class="btns">
+            <button type="button" data-kind="spring" data-hi="1">High</button>
+            <button type="button" data-kind="spring" data-hi="0">Low</button></div></div>
+        </div>
+      </div>
       <div>
         <p class="tide-name" id="tide-name" aria-live="polite">Rising tide</p>
         <p class="tide-sub" id="tide-sub">—</p>
@@ -245,11 +275,6 @@
 
   <div class="controls">
     <div class="row">
-      <button type="button" class="btn primary" id="play">Play</button>
-      <div class="seg" role="group" aria-label="Playback speed">
-        <button type="button" id="spd-h" aria-pressed="true">Hours</button>
-        <button type="button" id="spd-d" aria-pressed="false">Days</button>
-      </div>
       <button type="button" class="btn" id="today">Right now</button>
       <div class="scrub">
         <input type="range" id="slider" min="0" max="29.53" step="0.005" value="0" aria-label="Time through the lunar month">
@@ -262,26 +287,12 @@
       <button type="button" data-i="2">Full moon<br><b>Spring</b></button>
       <button type="button" data-i="3">Last quarter<br><b>Neap</b></button>
     </div>
-    <div class="presets">
-      <span class="head">Show me a tide</span>
-      <div class="preset-grid" id="presets">
-        <div class="preset"><span class="name">Neap</span><div class="btns">
-          <button type="button" class="btn" data-kind="neap" data-hi="1">High</button>
-          <button type="button" class="btn" data-kind="neap" data-hi="0">Low</button></div></div>
-        <div class="preset"><span class="name">Normal</span><div class="btns">
-          <button type="button" class="btn" data-kind="normal" data-hi="1">High</button>
-          <button type="button" class="btn" data-kind="normal" data-hi="0">Low</button></div></div>
-        <div class="preset"><span class="name">Spring</span><div class="btns">
-          <button type="button" class="btn" data-kind="spring" data-hi="1">High</button>
-          <button type="button" class="btn" data-kind="spring" data-hi="0">Low</button></div></div>
-      </div>
-    </div>
   </div>
 
   <section class="chartcard" id="chartcard">
     <div class="chart-head">
       <h2>One lunar month at your harbor</h2>
-      <span class="key"><i></i>water level &nbsp; <i class="env"></i>tidal range &nbsp; · click or drag to jump</span>
+      <span class="key"><i></i>water level &nbsp; <i class="env"></i>tidal range &nbsp; · tap to jump</span>
     </div>
     <svg id="month" class="chart" role="img" aria-label="Water level over one lunar month, showing larger spring tides at new and full moon and smaller neap tides at the quarter moons"></svg>
     <div class="chart-head">
@@ -323,7 +334,7 @@
   var MSL = 140, HS = 40;                 // harbor: mean sea level y, px per metre
 
   // t = days since new moon; c = offset that sets local clock time (frac(t+c) = time of day)
-  var t = 0, c = 0, useM = true, useS = true, playing = false, rate = 0.125, last = 0, raf = 0;
+  var t = 0, c = 0, useM = true, useS = true, playing = false, rate = 0, last = 0, raf = 0;
 
   var PHASES = ["New moon","Waxing crescent","First quarter","Waxing gibbous","Full moon","Waning gibbous","Last quarter","Waning crescent"];
   function phaseIndex(d){
@@ -396,8 +407,8 @@
   var ghosts = document.getElementById("ghosts"), gh = "";
   for(var i=0;i<4;i++){
     var ga = i*Math.PI/2, gx = CX+ORB*Math.cos(ga), gy = CY-ORB*Math.sin(ga);
-    gh += '<g class="ghost" data-i="'+i+'" transform="translate('+gx.toFixed(1)+','+gy.toFixed(1)+')" style="cursor:pointer">'
-      + '<circle r="16" fill="transparent"/><circle r="7" fill="#1D2230"/>'
+    gh += '<g class="ghost" transform="translate('+gx.toFixed(1)+','+gy.toFixed(1)+')">'
+      + '<circle r="7" fill="#1D2230"/>'
       + '<path d="M0 -7 A7 7 0 0 1 0 7 Z" fill="#EBE4D4" opacity=".55"/>'
       + '<circle r="7" fill="none" stroke="#7D89A5" stroke-opacity=".45"/></g>';
   }
@@ -418,7 +429,8 @@
       elSea=$("sea"), elSeaTop=$("sea-top"), elBoat=$("boat"), elStarsC=$("stars-c"),
       elSkyTop=$("sky-top"), elSkyBot=$("sky-bot"),
       elHwL=$("hw-line"), elHwT=$("hw-txt"), elLwL=$("lw-line"), elLwT=$("lw-txt"),
-      elSlider=$("slider"), elPlay=$("play"), month=$("month"), zoom=$("zoom"),
+      elSlider=$("slider"), month=$("month"), zoom=$("zoom"),
+      transBtns=$("transport").querySelectorAll("button"),
       tickBtns=$("ticks").querySelectorAll("button"),
       presetBtns=$("presets").querySelectorAll("button"), activePreset=null, presetT=-1;
 
@@ -605,6 +617,7 @@
   function advance(dt){
     var nt = t+dt;
     if(nt>=SYN){ nt -= SYN; c = frac(c+SYN); t = nt; drawMonth(); }   // keep the clock continuous across months
+    else if(nt<0){ nt += SYN; c = frac(c-SYN); t = nt; drawMonth(); }
     t = nt; render();
   }
 
@@ -613,55 +626,37 @@
   for(var tb=0; tb<tickBtns.length; tb++){
     tickBtns[tb].addEventListener("click", function(e){ stop(); setT(parseInt(e.currentTarget.dataset.i,10)*SYN/4); });
   }
-  ghosts.addEventListener("click", function(e){
-    var g = e.target.closest(".ghost"); if(!g) return;
-    stop(); setT(parseInt(g.dataset.i,10)*SYN/4);
-  });
-
-  var orbit = $("orbit"), dragging = false;
-  function dragTo(ev){
-    var pt = orbit.createSVGPoint(); pt.x = ev.clientX; pt.y = ev.clientY;
-    pt = pt.matrixTransform(orbit.getScreenCTM().inverse());
-    var ang = Math.atan2(-(pt.y-CY), pt.x-CX); if(ang<0) ang += TAU;
-    setT(ang/TAU*SYN);
-  }
-  orbit.addEventListener("pointerdown", function(ev){
-    if(ev.target.closest(".ghost")) return;
-    dragging = true; stop(); orbit.setPointerCapture(ev.pointerId); dragTo(ev); ev.preventDefault();
-  });
-  orbit.addEventListener("pointermove", function(ev){ if(dragging) dragTo(ev); });
-  orbit.addEventListener("pointerup", function(ev){ dragging = false; try{ orbit.releasePointerCapture(ev.pointerId); }catch(e){} });
-  orbit.addEventListener("pointercancel", function(){ dragging = false; });
-
-  var mDrag = false;
-  function monthTo(ev){
+  // tap the month chart to jump to that day
+  month.addEventListener("click", function(ev){
     var r = month.getBoundingClientRect(), x = ev.clientX-r.left;
-    setT(Math.min(SYN-1e-6, Math.max(0, (x-MX0)/(MX1-MX0)*SYN)));
-  }
-  month.addEventListener("pointerdown", function(ev){ mDrag = true; stop(); month.setPointerCapture(ev.pointerId); monthTo(ev); ev.preventDefault(); });
-  month.addEventListener("pointermove", function(ev){ if(mDrag) monthTo(ev); });
-  month.addEventListener("pointerup", function(ev){ mDrag = false; try{ month.releasePointerCapture(ev.pointerId); }catch(e){} });
-  month.addEventListener("pointercancel", function(){ mDrag = false; });
-
-  function stop(){ playing = false; elPlay.textContent = "Play"; if(raf) cancelAnimationFrame(raf); raf = 0; }
-  elPlay.addEventListener("click", function(){
-    if(playing){ stop(); return; }
-    playing = true; elPlay.textContent = "Pause"; last = performance.now();
-    (function loop(now){
-      if(!playing) return;
-      var dt = Math.min(0.1,(now-last)/1000); last = now;
-      advance(dt*rate);
-      raf = requestAnimationFrame(loop);
-    })(last);
+    stop(); setT(Math.min(SYN-1e-6, Math.max(0, (x-MX0)/(MX1-MX0)*SYN)));
   });
 
-  var sh = $("spd-h"), sd = $("spd-d");
-  function setSpeed(days){
-    rate = days ? 1.0 : 0.125;                 // 1 day/s, or 3 hours/s
-    sh.setAttribute("aria-pressed", String(!days)); sd.setAttribute("aria-pressed", String(days));
+  // transport: fast/slow reverse, pause, slow/fast forward (days per second)
+  function markTransport(){
+    for(var i=0;i<transBtns.length;i++){
+      var r = parseFloat(transBtns[i].dataset.rate);
+      transBtns[i].setAttribute("aria-pressed", String(playing ? r===rate : r===0));
+    }
   }
-  sh.addEventListener("click", function(){ setSpeed(false); });
-  sd.addEventListener("click", function(){ setSpeed(true); });
+  function stop(){ playing = false; rate = 0; if(raf) cancelAnimationFrame(raf); raf = 0; markTransport(); }
+  function play(r){
+    if(r===0 || (playing && r===rate)){ stop(); return; }   // tapping the lit button again pauses
+    rate = r;
+    if(!playing){
+      playing = true; last = performance.now();
+      (function loop(now){
+        if(!playing) return;
+        var dt = Math.min(0.1,(now-last)/1000); last = now;
+        advance(dt*rate);
+        raf = requestAnimationFrame(loop);
+      })(last);
+    }
+    markTransport();
+  }
+  for(var ti=0; ti<transBtns.length; ti++){
+    transBtns[ti].addEventListener("click", function(e){ play(parseFloat(e.currentTarget.dataset.rate)); });
+  }
 
   // presets: a typical day of each kind (neap at first quarter, spring at full moon,
   // normal halfway between), then the high or low tide nearest midday of that day

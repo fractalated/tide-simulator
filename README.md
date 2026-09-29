@@ -15,8 +15,9 @@ monthly spring–neap cycle all change together.
 - **Spring and neap tides you can see.** The month chart shades the spring
   tides at new and full moon and the neap tides at the quarter moons. A dashed
   envelope shows the tidal range growing and shrinking.
-- **"Show me a tide" presets.** One click jumps to a neap, normal or spring
-  high or low tide, so students can compare them side by side. Neap is set at
+- **"Show me a tide" presets.** Buttons right under the harbor picture jump to
+  a neap, normal or spring high or low tide, so students can compare them side
+  by side without scrolling. Neap is set at
   first quarter, spring at full moon, and normal halfway between. Each button
   picks the high or low nearest midday on that day.
 - **Turn each pull on or off.** Switch off the Sun and every day has the same
@@ -25,9 +26,12 @@ monthly spring–neap cycle all change together.
 - **The hours around now.** A zoomed chart labels each high and low with its
   time, with night shaded, so you can see two tides a day that run about 50
   minutes later each day.
-- **Scrub or play.** Drag the Moon, drag the slider, click or drag on the month
-  chart, or jump to new, first quarter, full or last quarter. Play at *Hours*
-  speed (3 h per second) or *Days* speed (1 day per second).
+- **Buttons, not dragging.** Under the top-down picture are fast reverse, slow
+  reverse, pause, slow forward and fast forward. Slow is 3 hours per second and
+  fast is 1 day per second. Tap the lit button again to pause. The pictures
+  don't respond to touch, so a finger on a phone just scrolls the page. The
+  slider, the new/quarter/full buttons, and tapping the month chart also move
+  through time.
 - **Opens on right now.** The page loads at the current moon age and your
   local clock time.
 
